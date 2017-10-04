@@ -1,0 +1,1 @@
+echo "Docker!" | installServer |& tee $GS_HOME/install.log
