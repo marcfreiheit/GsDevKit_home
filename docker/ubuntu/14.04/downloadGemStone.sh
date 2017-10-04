@@ -1,0 +1,168 @@
+#! /usr/bin/env bash
+#=========================================================================
+# Copyright (C) VMware, Inc. 1986-2011.  All Rights Reserved.
+# Copyright (c) 2013-2015,2016 GemTalk Systems, LLC <dhenrich@gemtalksystems.com>.
+#
+#   MIT license: https://github.com/GsDevKit/GsDevKit_home/blob/master/license.txt
+#=========================================================================
+
+theArgs="$*"
+source ${GS_HOME}/bin/private/shFeedback
+start_banner
+
+# help function
+usage() {
+ cat <<HELP
+USAGE: $(basename $0) [-h] <gemstone-version>
+
+Safe to run multiple times, as it will not overwrite existing data
+
+Actions:
+   Download the GemStone product zipfile
+   Uncompress the GemStone zipfile into \$GS_HOME/shared/downloads/products
+   Copy the initial GsDevKit repository to data directory
+   Copy the gci libraries to the client smalltalk vms
+   Print build version information and available IPv4 addresses
+
+OPTIONS
+  -h display help
+
+EXAMPLES
+  $(basename $0) -h
+  $(basename $0) 3.2.9
+
+HELP
+}
+
+if [ "$1x" = "x" ] ; then
+  usage; exit_1_banner "Required positional argument missing"
+fi
+vers="$1"
+if [ "${GS_HOME}x" = "x" ] ; then
+  exit_1_banner "the GS_HOME environment variable needs to be defined"
+fi
+
+source ${GS_HOME}/bin/defGsDevKit.env
+
+echo "Downloading GemStone/S $vers"
+bucket=$vers
+
+# Linux looks OK
+gsvers="GemStone64Bit${vers}-x86_64.Linux"
+;;
+MSYS_NT*|MINGW32_NT*|MINGW64_NT*)
+if  [ "$vers" \< "3.3.0"  ] ;  then 
+    gsvers="GemBuilderC${vers}-x86.Windows_NT"
+else
+    gsvers="GemStone64BitClient${vers}-x86.Windows_NT"
+fi
+;;
+
+# set zipfile name from gsvers
+gss_file=${gsvers}.zip
+
+# set ftp_address
+ftp_address=https://downloads.gemtalksystems.com
+
+# Check that the current directory is writable
+if [ ! -w "." ]
+    then
+    /bin/ls -ld "`pwd`"
+    exit_1_banner "This script requires write permission on your current directory."
+fi
+
+# We're good to go. Let user know.
+machine_name="`uname -n`"
+echo "[Info] Starting download of $gsvers on $machine_name"
+
+if [ -d "$GS_SHARED_DOWNLOADS/products/$gsvers" ] ; then
+    exit_0_banner "$GS_SHARED_DOWNLOADS//products/$gsvers already exists to replace it, remove or rename it and rerun this script"
+fi
+
+# Look for either wget to download GemStone
+if [ -e "`which wget`" ]; then
+    cmd="`which wget` --no-verbose"
+else
+  if [ -e "`which curl`" ]; then
+      cmd="`which curl` -O -s -S"
+  else
+    exit_1_banner "wget or curl is not available. Install wget or curl and rerun this script."
+  fi
+fi
+
+# Download GemStone
+pushd $GS_SHARED_DOWNLOADS/zip >& /dev/null
+  if [ ! -e $gss_file ]; then
+    echo "[Info] Downloading ${ftp_address}/pub/GemStone64/$bucket/$gss_file using ${cmd}"
+    $cmd ${ftp_address}/pub/GemStone64/$bucket/$gss_file
+  else
+    echo "[Info] $gss_file already exists"
+    echo "to replace it, remove or rename it and rerun this script"
+  fi
+
+  # Unzip the downloaded archive into $GS_HOME/shared/downloads/products/
+  echo "[Info] Uncompressing GemStone archive into $GS_HOME/shared/downloads/products/"
+  gs_product=$GS_SHARED_DOWNLOADS/products/$gsvers
+  if [ ! -e $gs_product ]
+    then
+    unzip -q -d $GS_SHARED_DOWNLOADS/products $gss_file
+  else
+    echo "[Warning] $GS_SHARED_DOWNLOADS/products/$gsvers already exists"
+    echo "to replace it, remove or rename it and rerun this script"
+  fi
+popd >& /dev/null
+
+# Copy initial system.conf into the Seaside data directory
+echo "[Info] Copying initial system.conf to data directory"
+if [ ! -e $gs_product/seaside/data/system.conf ]
+    then
+    cp $gs_product/seaside/system.conf \
+        $gs_product/seaside/data
+    chmod 644 $gs_product/seaside/data/system.conf
+else
+    echo "[Warning] $gs_product/seaside/data/system.conf already exists"
+    echo "to replace it, remove or rename it and rerun this script"
+fi
+
+# Copy an initial extent to the Seaside data directory
+echo "[Info] Copying initial Seaside repository to data directory"
+if [ ! -e $gs_product/seaside/data/extent0.dbf ]
+    then
+    cp $gs_product/bin/extent0.seaside.dbf \
+        $gs_product/seaside/data/extent0.dbf
+    chmod 644 $gs_product/seaside/data/extent0.dbf
+else
+    echo "[Warning] $gs_product/seaside/data/extent0.dbf already exists"
+    echo "to replace it, remove or rename it and rerun this script"
+fi
+;;
+
+#    Copy the gci libraries to client installations
+$GS_HOME/bin/private/installClientGciLibraries $vers
+
+echo "[Info] Finished $gsvers download on $machine_name"
+echo ""
+echo "[Info] GemStone version information:"
+cat $gs_product/version.txt
+
+if [ "${GS_TRAVIS}x" != "x" ] ; then
+    # running on travis server - have to use a custom key file
+    case "$vers" in
+        2.4.*) keyName="GemStone64Bit2.4.0-x86_64.Linux.key" ;;
+        3.0.1) keyName="GemStone64Bit3.0.0-x86_64.Linux.key" ;;
+        3.1.*) keyName="GemStone64Bit3.1.0-x86_64.Linux.key" ;;
+        3.2.*) keyName="GemStone64Bit3.2.0-x86_64.Linux.key" ;;
+        3.2.*) keyName="GemStone64Bit3.2.0-x86_64.Linux.key" ;;
+        3.3.*) keyName="GemStone64Bit3.3.0-x86_64.Linux.key" ;;
+        *) exit_1_banner "No travis license for GemStone $vers";;
+    esac
+    if [ "${keyName}x" != "x" ] ; then
+        chmod +w  $gs_product/seaside/etc/gemstone.key
+        echo "Copying $GS_HOME/travis/$keyName to $gs_product/seaside/etc/gemstone.key"
+        cp $GS_HOME/travis/$keyName $gs_product/seaside/etc/gemstone.key
+    fi
+    ;;
+fi
+
+# End of script
+exit_0_banner "...finished"
