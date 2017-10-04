@@ -11,7 +11,7 @@ start_banner
 
 usage() {
   cat <<HELP
-USAGE: $(basename $0) [-h] [-c https | ssh ] [-o <organization-name>] client|server|both
+USAGE: $(basename $0) [-h] [-c https | ssh ] [-o <organization-name>]
 
 OPTIONS
   -h
@@ -21,19 +21,17 @@ OPTIONS
      https is the default.
   -o <organization-name>
      use <organization-name> instead of GsDevKit. Use this option when
-     you've cloned the todeClient project
+     you've forked the other GsDevKit_* projects.
 
 EXAMPLES
    $(basename $0) -h
-   $(basename $0) client
-   $(basename $0) server
-   $(basename $0) both
+   $(basename $0)
 
 HELP
 }
 
 if [ "${GS_HOME}x" = "x" ] ; then
-  exit_1_banner "the GS_HOME environment variable needs to be defined"
+   exit_1_banner "The \$GS_HOME environment variable needs to be defined"
 fi
 source ${GS_HOME}/bin/defGsDevKit.env
 
@@ -44,24 +42,15 @@ while getopts "hc:o:" OPT ; do
     h) usage; exit 0;;
     c) modeArg=" -c ${OPTARG} ";;
     o) organizationArg=" -o ${OPTARG} ";;
-    *) usage; exit_1_banner "Unknown option";;
+    *) usage; exit_1_banner "Uknown option";;
   esac
 done
 shift $(($OPTIND - 1))
 
-if [ $# -ne 1 ]; then
-  usage; exit_1_banner "Wrong number of arguments (1 expected)"
+if [ $# -ne 0 ]; then
+  usage; exit_1_banner "Unexpected argument ($1)"
 fi
 
-setupType=$1
-
-$GS_SERVER_SETUP_HOME/downloadGemStone.sh $setupType
-$GS_SERVER_SETUP_HOME/cloneGsDevKitProjects.sh $modeArg $organizationArg $setupType
-$GS_SERVER_SETUP_HOME/cloneSharedTodeProjects.sh $modeArg $setupType
-
-cat - > $GS_HOME/bin/.gsdevkitSetup << EOF
-the presence of this file means that \$GS_HOME/bin/setupGsDevKit has
-been successfully run.
-EOF
+$GS_HOME/bin/setupGsDevKit $modeArg $organizationArg server
 
 exit_0_banner "...finished"

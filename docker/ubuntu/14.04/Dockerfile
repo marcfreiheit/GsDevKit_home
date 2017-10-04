@@ -4,6 +4,7 @@ ARG GEMSTONEVERSION=3.3.0
 # Known to have best compatibility
 FROM ubuntu:14.04
 
+ENV GS_SERVER_SETUP_HOME=/home/gs/GsDevKit_home/docker/ubuntu/14.04
 ENV GS_HOME=/home/gs/GsDevKit_home
 ENV PATH="${GS_HOME}/bin:${PATH}"
 ENV DEBIAN_FRONTEND noninteractive
