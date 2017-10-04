@@ -11,9 +11,6 @@ ENV DEBIAN_FRONTEND noninteractive
 # Check out this installation guide
 LABEL docs.installation="https://github.com/GsDevKit/GsDevKit_home/blob/master/docs/installation/installDevKitServer.md"
 
-# set password for root
-RUN echo "root:Docker!" | chpasswd
-
 # create user to execute installation comamnds
 RUN adduser gs
 
@@ -22,7 +19,10 @@ RUN apt-get update -y && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
     apt-get autoremove && \
-    apt-get install -y git
+    apt-get install -y git curl zip unzip libpam0g:i386 libssl1.0.0:i386 gcc-multilib libstdc++6:i386 gdb libfreetype6:i386 pstack libgl1-mesa-glx:i386 libxcb-dri2-0:i386
+
+# Setting up shared memory
+RUN ./settingUpSharedMemory.sh
 
 # Most commands shouldn't be executed as root
 USER gs
