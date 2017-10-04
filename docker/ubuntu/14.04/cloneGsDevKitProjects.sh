@@ -1,0 +1,60 @@
+#=========================================================================
+# Copyright (c) 2015, 2016 GemTalk Systems, LLC <dhenrich@gemtalksystems.com>.
+#
+#   MIT license: https://github.com/GsDevKit/GsDevKit_home/blob/master/license.txt
+#=========================================================================
+
+theArgs="$*"
+source ${GS_HOME}/bin/private/shFeedback
+start_banner
+
+usage() {
+  cat <<HELP
+USAGE: $(basename $0) [-h] [-c https | ssh ] [-o <organization-name>] client|server|both
+
+OPTIONS
+  -h
+     display help
+  -c https | ssh
+     clone using https (https://github.com) or ssh (git@github.com)
+     "ssh" is the default 
+  -o <organization-name>
+     use <organization-name> instead of GsDevKit. Use this option when
+     you've forked the other GsDevKit_* projects.
+
+EXAMPLES
+   $(basename $0) -h
+   $(basename $0) client
+   $(basename $0) -c ssh -f dalehenrich server
+   $(basename $0) -c ssh server
+   $(basename $0) -c https both
+
+HELP
+}
+
+if [ "${GS_HOME}x" = "x" ] ; then
+  exit_1_banner "the GS_HOME environment variable needs to be defined"
+fi
+source ${GS_HOME}/bin/defGsDevKit.env
+
+modeArg=""
+organizationArg=" -o GsDevKit "
+while getopts "ho:c:" OPT ; do
+  case "$OPT" in
+    h) usage; exit 0;;
+    c) modeArg=" -c ${OPTARG} ";;
+    o) organizationArg=" - o ${OPTARG} ";;
+    *) usage; exit_1_banner "Unknown option";;
+  esac
+done
+shift $(($OPTIND - 1))
+
+if [ $# -lt 1 ]; then
+  usage; exit_1_banner "missing required argument"
+fi
+
+$GS_HOME/bin/private/clone_sys_local $modeArg $organizationArg
+
+$GS_HOME/bin/private/clone_gs_client_dev $modeArg $organizationArg
+
+exit_0_banner "...finished"
