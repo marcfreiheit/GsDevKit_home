@@ -17,7 +17,8 @@ RUN adduser gs
 WORKDIR /home/gs
 
 # update and install git to clone server app
-RUN apt-get update -y && \
+RUN dpkg --add-architecture i386 && \
+    apt-get update -y && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
     apt-get autoremove && \
