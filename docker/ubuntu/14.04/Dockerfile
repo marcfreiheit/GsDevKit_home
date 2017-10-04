@@ -14,6 +14,7 @@ LABEL docs.installation="https://github.com/GsDevKit/GsDevKit_home/blob/master/d
 
 # create user to execute installation comamnds
 RUN adduser gs
+WORKDIR /home/gs
 
 # update and install git to clone server app
 RUN apt-get update -y && \
@@ -22,21 +23,15 @@ RUN apt-get update -y && \
     apt-get autoremove && \
     apt-get install -y git curl zip unzip libpam0g:i386 libssl1.0.0:i386 gcc-multilib libstdc++6:i386 gdb libfreetype6:i386 pstack libgl1-mesa-glx:i386 libxcb-dri2-0:i386
 
+# Copy scripts to install server
+RUN mkdir GsDevKit_home
+COPY ../../../../ ./GsDevKit_home
+
 # Setting up shared memory
-RUN ./settingUpSharedMemory.sh
+RUN chmod +x ./install.sh && \
+    ./docker/ubuntu/14.04/installServer.sh
 
 # Most commands shouldn't be executed as root
-USER gs
-
-WORKDIR /home/gs
-
-RUN git clone https://github.com/GsDevKit/GsDevKit_home.git
-
-COPY . .
-
-USER root
-RUN chmod +x ./install.sh
-
 USER gs
 RUN ./install.sh
 
