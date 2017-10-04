@@ -1,0 +1,67 @@
+#! /usr/bin/env bash
+#=========================================================================
+# Copyright (c) 2015, 2016 GemTalk Systems, LLC <dhenrich@gemtalksystems.com>.
+#
+#   MIT license: https://github.com/GsDevKit/GsDevKit_home/blob/master/license.txt
+#=========================================================================
+
+theArgs="$*"
+source ${GS_HOME}/bin/private/shFeedback
+start_banner
+
+usage() {
+  cat <<HELP
+USAGE: $(basename $0) [-h] [-c https | ssh ] [-o <organization-name>] client|server|both
+
+OPTIONS
+  -h
+     display help
+  -c https | ssh
+     clone using https (https://github.com) or ssh (git@github.com).
+     https is the default.
+  -o <organization-name>
+     use <organization-name> instead of GsDevKit. Use this option when
+     you've cloned the todeClient project
+
+EXAMPLES
+   $(basename $0) -h
+   $(basename $0) client
+   $(basename $0) server
+   $(basename $0) both
+
+HELP
+}
+
+if [ "${GS_HOME}x" = "x" ] ; then
+  exit_1_banner "the GS_HOME environment variable needs to be defined"
+fi
+source ${GS_HOME}/bin/defGsDevKit.env
+
+modeArg=""
+organizationArg=""
+while getopts "hc:o:" OPT ; do
+  case "$OPT" in
+    h) usage; exit 0;;
+    c) modeArg=" -c ${OPTARG} ";;
+    o) organizationArg=" -o ${OPTARG} ";;
+    *) usage; exit_1_banner "Unknown option";;
+  esac
+done
+shift $(($OPTIND - 1))
+
+if [ $# -ne 1 ]; then
+  usage; exit_1_banner "Wrong number of arguments (1 expected)"
+fi
+
+setupType=$1
+
+$GS_HOME/bin/utils/installOsPrereqs $setupType
+$GS_HOME/bin/utils/cloneGsDevKitProjects $modeArg $organizationArg $setupType
+$GS_HOME/bin/utils/cloneSharedTodeProjects $modeArg $setupType
+
+cat - > $GS_HOME/bin/.gsdevkitSetup << EOF
+the presence of this file means that \$GS_HOME/bin/setupGsDevKit has
+been successfully run.
+EOF
+
+exit_0_banner "...finished"
