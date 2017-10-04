@@ -1,0 +1,7 @@
+version: '0.1'
+services:
+  gsserver:
+    build: .
+    image: marcfreiheit/gsserver
+    restart: on_failure
+    env_file: .env

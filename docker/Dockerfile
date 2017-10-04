@@ -4,6 +4,10 @@ ARG GEMSTONEVERSION=3.3.0
 # Known to have best compatibility
 FROM ubuntu:14.04
 
+ENV GS_HOME=/home/gs/GsDevKit_home
+ENV PATH="${GS_HOME}/bin:${PATH}"
+ENV DEBIAN_FRONTEND noninteractive
+
 # Check out this installation guide
 LABEL docs.installation="https://github.com/GsDevKit/GsDevKit_home/blob/master/docs/installation/installDevKitServer.md"
 
@@ -23,14 +27,16 @@ RUN apt-get update -y && \
 # Most commands shouldn't be executed as root
 USER gs
 
-RUN git clone https://github.com/GsDevKit/GsDevKit_home.git
+WORKDIR /home/gs
 
-RUN cd GsDevKit_home && \
-    export GS_HOME=`pwd` && \
-    export PATH=$GS_HOME/bin:$PATH
+RUN git clone https://github.com/GsDevKit/GsDevKit_home.git
 
 COPY . .
 
-RUN ./docker/install.sh
+USER root
+RUN chmod +x ./install.sh
+
+USER gs
+RUN ./install.sh
 
 RUN createStone devKit_33 $GEMSTONEVERSION |& tee -a $GS_HOME/install.log
