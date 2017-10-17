@@ -22,7 +22,11 @@ RUN dpkg --add-architecture i386 && \
     apt-get upgrade -y && \
     apt-get dist-upgrade -y && \
     apt-get autoremove && \
-    apt-get install -y git curl zip unzip libpam0g:i386 libssl1.0.0:i386 gcc-multilib libstdc++6:i386 gdb libfreetype6:i386 pstack libgl1-mesa-glx:i386 libxcb-dri2-0:i386
+    apt-get install -y git curl zip unzip libpam0g:i386 libssl1.0.0:i386 gcc-multilib libstdc++6:i386 gdb libfreetype6:i386 pstack libgl1-mesa-glx:i386 libxcb-dri2-0:i386 fonts-dejavu
+
+RUN ln -f -s /usr/lib/i386-lin-gnu/libstdc++.so.6 /usr/lib/i386-linux-gnu/libstdc++.so && \
+    installServer
+    
 
 # Copy scripts to install server
 RUN mkdir GsDevKit_home
