@@ -55,9 +55,10 @@ fi
 
 setupType=$1
 
-$GS_SERVER_SETUP_HOME/downloadGemStone.sh $setupType
-$GS_SERVER_SETUP_HOME/cloneGsDevKitProjects.sh $modeArg $organizationArg $setupType
-$GS_SERVER_SETUP_HOME/cloneSharedTodeProjects.sh $modeArg $setupType
+# reconfigured install script to skip sudo
+$GS_SERVER_SETUP_HOME/installOsPrereqs $setupType
+$GS_HOME/bin/utils/cloneGsDevKitProjects $modeArg $organizationArg $setupType
+$GS_HOME/bin/utils/cloneSharedTodeProjects $modeArg $setupType
 
 cat - > $GS_HOME/bin/.gsdevkitSetup << EOF
 the presence of this file means that \$GS_HOME/bin/setupGsDevKit has
