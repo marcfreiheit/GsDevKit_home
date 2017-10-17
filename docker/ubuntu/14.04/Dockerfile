@@ -1,5 +1,5 @@
 # Version of stone 
-ARG GEMSTONEVERSION=3.3.0
+ARG GEMSTONEVERSION=3.4.0
 
 # Known to have best compatibility
 FROM ubuntu:14.04
@@ -10,7 +10,7 @@ ENV PATH="${GS_HOME}/bin:${PATH}"
 ENV DEBIAN_FRONTEND noninteractive
 
 # Check out this installation guide
-LABEL docs.installation="https://github.com/GsDevKit/GsDevKit_home/blob/master/docs/installation/installDevKitServer.md"
+LABEL docs.installation="https://github.com/HPI-SWA-Lab/BP2017RH1/wiki/Installation-Guide"
 
 # create user to execute installation comamnds
 RUN adduser gs
